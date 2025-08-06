@@ -1,9 +1,10 @@
 "use client";
-import { removeBookmark } from "@/lib/actions/companion.actions";
+import {isBookmarked, removeBookmark} from "@/lib/actions/companion.actions";
 import { addBookmark } from "@/lib/actions/companion.actions";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {useState, useEffect} from "react";
 
 interface CompanionCardProps {
     id: string;
@@ -12,7 +13,7 @@ interface CompanionCardProps {
     subject: string;
     duration: number;
     color: string;
-    bookmarked: boolean;
+    bookmarked?: boolean;
 }
 
 const CompanionCard = ({
@@ -24,14 +25,26 @@ const CompanionCard = ({
                            color,
                            bookmarked,
                        }: CompanionCardProps) => {
-    const pathname = usePathname();
-    const handleBookmark = async () => {
-        if (bookmarked) {
-            await removeBookmark(id, pathname);
 
+    const [bookmark, setBookmark] = useState(false);
+    const pathname = usePathname();
+
+    useEffect(() => {
+        const checkBookmark = async () => {
+            const isMarked = await isBookmarked(id);
+            setBookmark(isMarked || false);
+        };
+
+        checkBookmark();
+    }, [id]);
+
+    const handleBookmark = async () => {
+        if (bookmark) {
+            await removeBookmark(id, pathname);
+            setBookmark(false);
         } else {
             await addBookmark(id, pathname);
-
+            setBookmark(true);
         }
     };
     return (
@@ -41,7 +54,7 @@ const CompanionCard = ({
                 <button className="companion-bookmark" onClick={handleBookmark}>
                     <Image
                         src={
-                            bookmarked ? "/icons/bookmark-filled.svg" : "/icons/bookmark.svg"
+                            bookmark ? "/icons/bookmark-filled.svg" : "/icons/bookmark.svg"
                         }
                         alt="bookmark"
                         width={12.5}
