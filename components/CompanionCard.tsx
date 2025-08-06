@@ -27,6 +27,7 @@ const CompanionCard = ({
                        }: CompanionCardProps) => {
 
     const [bookmark, setBookmark] = useState(false);
+    const [svgElement, setSvgElement] = useState<HTMLObjectElement | null>(null);
     const pathname = usePathname();
 
     useEffect(() => {
@@ -37,6 +38,23 @@ const CompanionCard = ({
 
         checkBookmark();
     }, [id]);
+
+    // Update SVG class when bookmark state changes
+    useEffect(() => {
+        if (svgElement) {
+            const svgDoc = svgElement.contentDocument;
+            if (svgDoc) {
+                const path = svgDoc.querySelector('.bookmark-path');
+                if (path) {
+                    if (bookmark) {
+                        path.classList.add('filled');
+                    } else {
+                        path.classList.remove('filled');
+                    }
+                }
+            }
+        }
+    }, [bookmark, svgElement]);
 
     const handleBookmark = async () => {
         if (bookmark) {
@@ -52,13 +70,30 @@ const CompanionCard = ({
             <div className="flex justify-between items-center">
                 <div className="subject-badge">{subject}</div>
                 <button className="companion-bookmark" onClick={handleBookmark}>
-                    <Image
-                        src={
-                            bookmark ? "/icons/bookmark-filled.svg" : "/icons/bookmark.svg"
-                        }
-                        alt="bookmark"
+                    <object
+                        data="/icons/bookmark-dynamic.svg"
+                        type="image/svg+xml"
                         width={12.5}
                         height={15}
+                        className="bookmark-icon"
+                        ref={(el) => {
+                            if (el) {
+                                setSvgElement(el);
+                                el.onload = () => {
+                                    const svgDoc = el.contentDocument;
+                                    if (svgDoc) {
+                                        const path = svgDoc.querySelector('.bookmark-path');
+                                        if (path) {
+                                            if (bookmark) {
+                                                path.classList.add('filled');
+                                            } else {
+                                                path.classList.remove('filled');
+                                            }
+                                        }
+                                    }
+                                };
+                            }
+                        }}
                     />
                 </button>
             </div>
